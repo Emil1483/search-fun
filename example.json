@@ -1,0 +1,12 @@
+{
+    "id": "221",
+    "ean": "221",
+    "idByManufacturer": "221",
+    "additionalFields": [],
+    "retailers": [
+        {
+            "id": "abc",
+            "productSku": "abc"
+        }
+    ]
+}

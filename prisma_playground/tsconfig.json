@@ -1,0 +1,16 @@
+{
+    "extends": "fastify-tsconfig",
+    "compilerOptions": {
+      "declaration": true,
+      "declarationMap": true,
+      "esModuleInterop": true,
+      "incremental": true,
+      "isolatedModules": true,
+      "noUnusedLocals": false,
+      "outDir": "build",
+      "removeComments": true,
+      "sourceMap": true
+    },
+    "include": ["**/*.ts"]
+  }
+  

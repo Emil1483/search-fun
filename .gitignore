@@ -1,4 +1,9 @@
 venv
 **.sql
-**.json
+node_modules
 .env
+
+dump/**.json
+products.**.json
+products.json
+retailers.json

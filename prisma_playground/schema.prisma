@@ -1,0 +1,380 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity", "fullTextSearch", "fullTextIndex", "interactiveTransactions"]
+}
+
+datasource db {
+  provider             = "mysql"
+  referentialIntegrity = "prisma"
+  url                  = env("DATABASE_URL")
+}
+
+model User {
+  id                     String              @default(uuid())
+  identityId             String?
+  firstName              String?             @db.TinyText
+  lastName               String?             @db.TinyText
+  fullName               String?             @db.TinyText
+  mobilePhoneCountryCode String              @db.VarChar(4)
+  mobilePhoneNumber      String              @db.VarChar(16)
+  email                  String?             @db.VarChar(100)
+  ownerships             ItemOwnership[]
+  configurations         UserConfiguration[]
+  experiments            UserExperiment[]
+  reviewRequests         ReviewRequest[]
+  search                 String              @db.MediumText
+  status                 UserStatus
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @default(now()) @updatedAt
+  revokedAt              DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([identityId])
+  @@unique([mobilePhoneCountryCode, mobilePhoneNumber])
+  @@unique([email])
+  @@index([revokedAt])
+  @@fulltext([search])
+}
+
+model UserConfiguration {
+  id        String    @default(uuid())
+  userId    String
+  key       String
+  value     String?   @db.Text
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([key, userId])
+  @@index([key])
+  @@index([userId])
+  @@index([revokedAt])
+}
+
+model UserExperiment {
+  id        String    @default(uuid())
+  userId    String
+  key       String
+  value     String?   @db.Text
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([key, userId])
+  @@index([key])
+  @@index([userId])
+  @@index([revokedAt])
+}
+
+model Retailer {
+  id             String                  @default(uuid())
+  name           String                  @db.TinyText
+  website        String?
+  iconPath       String?                 @db.Text
+  search         String                  @db.MediumText
+  contacts       RetailerContact[]
+  configurations RetailerConfiguration[]
+  products       Product[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @default(now()) @updatedAt
+  revokedAt      DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([revokedAt])
+  @@fulltext([search])
+}
+
+model RetailerContact {
+  id               String    @default(uuid())
+  retailerId       String
+  phoneCountryCode String?   @db.VarChar(4)
+  phoneNumber      String?   @db.VarChar(16)
+  email            String?   @db.VarChar(100)
+  retailer         Retailer  @relation(fields: [retailerId], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  revokedAt        DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([retailerId])
+  @@index([revokedAt])
+}
+
+model RetailerConfiguration {
+  id         String    @default(uuid())
+  retailerId String
+  key        String
+  value      String?   @db.Text
+  retailer   Retailer  @relation(fields: [retailerId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  revokedAt  DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([key, retailerId])
+  @@index([key])
+  @@index([retailerId])
+  @@index([revokedAt])
+}
+
+model Product {
+  id          String            @default(uuid())
+  retailerId  String
+  name        String            @db.TinyText
+  description String?           @db.Text
+  search      String            @db.MediumText
+  metadata    ProductMetadata[]
+  images      ProductImage[]
+  retailer    Retailer          @relation(fields: [retailerId], references: [id])
+  items       Item[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @default(now()) @updatedAt
+  revokedAt   DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([retailerId])
+  @@index([revokedAt])
+  @@fulltext([search])
+}
+
+model ProductMetadata {
+  id        String    @default(uuid())
+  productId String
+  key       String
+  value     String?   @db.Text
+  product   Product   @relation(fields: [productId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([key, productId])
+  @@index([key])
+  @@index([productId])
+  @@index([revokedAt])
+}
+
+model ProductImage {
+  id        String    @default(uuid())
+  productId String
+  path      String    @db.Text
+  product   Product   @relation(fields: [productId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([productId])
+  @@index([revokedAt])
+}
+
+model Item {
+  id          String          @default(uuid())
+  productId   String
+  retailerId  String?
+  receiptId   String?
+  purchasedAt DateTime?
+  ownerships  ItemOwnership[]
+  valuations  ItemValuation[]
+  product     Product         @relation(fields: [productId], references: [id])
+  status      ItemStatus      @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @default(now()) @updatedAt
+  revokedAt   DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([productId])
+  @@index([retailerId])
+  @@index([receiptId])
+  @@index([revokedAt])
+}
+
+model ItemValuation {
+  id        String    @default(uuid())
+  itemId    String
+  value     Float
+  currency  Currency
+  item      Item      @relation(fields: [itemId], references: [id])
+  validAt   DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([validAt, itemId])
+  @@index([itemId])
+  @@index([revokedAt])
+}
+
+model ItemOwnership {
+  id        String    @default(uuid())
+  itemId    String
+  userId    String
+  item      Item      @relation(fields: [itemId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  validAt   DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([validAt, itemId])
+  @@index([userId])
+  @@index([itemId])
+  @@index([revokedAt])
+}
+
+model Receipt {
+  id        String    @default(uuid())
+  signature String?
+  issuerId  String?
+  issuedAt  DateTime?
+  raw       String?   @db.MediumText
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([signature])
+  @@index([issuerId])
+  @@index([revokedAt])
+}
+
+model UndefinedItem {
+  id          String    @default(uuid())
+  requesterId String
+  receiptId   String?
+  raw         String?   @db.MediumText
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  revokedAt   DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([requesterId])
+  @@index([receiptId])
+  @@index([revokedAt])
+}
+
+model ReviewRequest {
+  id              String                        @default(uuid())
+  requesterId     String
+  receiptId       String?
+  type            ReviewRequestType
+  processorMethod ReviewRequestProcessorMethod?
+  processorId     String?
+  sourcePath      String?                       @db.Text
+  user            User                          @relation(fields: [requesterId], references: [id])
+  metadata        ReviewRequestMetadata[]
+  status          ReviewRequestStatus           @default(INITIATED)
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @default(now()) @updatedAt
+  revokedAt       DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([requesterId])
+  @@index([receiptId])
+  @@index([processorId])
+  @@index([revokedAt])
+}
+
+model ReviewRequestMetadata {
+  id              String        @default(uuid())
+  reviewRequestId String
+  key             String
+  value           String?       @db.Text
+  reviewRequest   ReviewRequest @relation(fields: [reviewRequestId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+  revokedAt       DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@unique([key, reviewRequestId])
+  @@index([key])
+  @@index([reviewRequestId])
+  @@index([revokedAt])
+}
+
+model Event {
+  id        String         @default(uuid())
+  type      String
+  actorType EventActorType
+  actorId   String?
+  status    EventStatus    @default(INITIATED)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @default(now()) @updatedAt
+  revokedAt DateTime?
+
+  @@id([id])
+  @@unique([createdAt, id])
+  @@index([type, actorId])
+  @@index([type])
+  @@index([actorId])
+  @@index([revokedAt])
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ItemStatus {
+  PENDING
+  CREATED
+  DISCARDED
+}
+
+enum Currency {
+  NOK
+}
+
+enum ReviewRequestProcessorMethod {
+  OCR
+  INTEGRATION
+}
+
+enum ReviewRequestStatus {
+  INITIATED
+  PROCESSING
+  PENDING
+  APPROVED
+  DECLINED
+  FINALIZED
+}
+
+enum EventStatus {
+  INITIATED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum EventActorType {
+  SYSTEM
+  USER
+}
+
+enum ReviewRequestType {
+  RECEIPT
+  LABEL
+  MANUAL
+}
